@@ -1,0 +1,191 @@
+{% extends "knowledge/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container" style="padding: 3.5rem 1.5rem 5rem;">
+  <!-- Header -->
+  <div style="margin-bottom: 2.5rem;">
+    <div class="mono" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--vermilion); margin-bottom: 0.4rem; font-weight: 700;">
+      Guest Services &amp; Safety
+    </div>
+    <h1 style="font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; text-transform: uppercase; margin-bottom: 0.5rem;">
+      Support &amp; Human Escalation
+    </h1>
+    <p style="font-size: 0.95rem; color: var(--text-muted); max-width: 680px;">
+      Direct dispatch ticket creation for room engineering, housekeeping turnarounds, luggage porterage, and duty manager interventions.
+    </p>
+  </div>
+
+  <div class="grid-2" style="align-items: start; gap: 2.5rem;">
+    <!-- ================= SUPPORT TICKET SUBMISSION FORM ================= -->
+    <div class="panel">
+      <h2 style="font-size: 1.35rem; font-weight: 700; text-transform: uppercase; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+        Dispatch a Support Ticket
+      </h2>
+
+      <form id="supportTicketForm" onsubmit="handleTicketSubmit(event)">
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="ticketGuestName">Guest Full Name *</label>
+            <input type="text" id="ticketGuestName" class="form-control" placeholder="Lord Harrington" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="ticketEmail">Contact Email *</label>
+            <input type="email" id="ticketEmail" class="form-control" placeholder="guest@domain.com" required>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="ticketHotel">Hotel / Property</label>
+            <input type="text" id="ticketHotel" class="form-control" placeholder="Taj Lake Palace Udaipur">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="ticketRoom">Suite / Room Number</label>
+            <input type="text" id="ticketRoom" class="form-control" placeholder="Suite 402">
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="ticketCategory">Department Category *</label>
+            <select id="ticketCategory" class="form-control">
+              {% for cat in categories %}
+              <option value="{{ cat }}">{{ cat }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="ticketPriority">Urgency / Priority SLA *</label>
+            <select id="ticketPriority" class="form-control">
+              <option value="LOW">LOW (24 Hours — General Inquiry)</option>
+              <option value="MEDIUM" selected>MEDIUM (4 Hours — Standard Request)</option>
+              <option value="HIGH">HIGH (60 Mins — Priority Attention)</option>
+              <option value="URGENT">URGENT (&lt; 15 Mins — Immediate Escalation)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="ticketSubject">Subject / Nature of Incident *</label>
+          <input type="text" id="ticketSubject" class="form-control" placeholder="e.g. AC Thermostat Calibration or 4 Bags Luggage Pickup" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="ticketDescription">Detailed Description *</label>
+          <textarea id="ticketDescription" class="form-control" rows="3" placeholder="Please provide specific room telemetry, guest arrival constraint, or staff assistance notes..." required></textarea>
+        </div>
+
+        <div style="text-align: right; margin-top: 1.5rem; border-top: 1px solid var(--border-subtle); padding-top: 1rem;">
+          <button type="submit" id="ticketSubmitBtn" class="btn btn-primary" style="padding: 0.75rem 2rem;">
+            Dispatch Ticket to Duty Station
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ================= RIGHT SIDE: DUTY MANAGER SAFETY MATRIX ================= -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <div class="panel">
+        <span class="mono" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--vermilion); font-weight: 700; display: block; margin-bottom: 0.5rem;">
+          Duty Manager Safety Protocol
+        </span>
+        <h3 style="font-size: 1.25rem; font-weight: 700; color: #FFF; margin-bottom: 0.75rem;">
+          Human-in-the-Loop Takeover
+        </h3>
+        <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1.25rem;">
+          THREAD guarantees that high-stakes requests (late checkouts with incoming VIP arrivals, room changes, and financial disputes) never trigger automated hallucinations.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.78rem;">
+          <div style="padding: 0.75rem 1rem; background: rgba(230, 57, 46, 0.08); border: 1px solid rgba(230, 57, 46, 0.25); border-radius: var(--radius-sm);">
+            <strong style="color: var(--vermilion-light);">1. Tight Turnaround Windows (&lt; 60 Mins):</strong>
+            <span style="color: var(--text-muted); display: block; margin-top: 2px;">Autonomously alerts Executive Housekeeper &amp; Duty Manager Laurent.</span>
+          </div>
+
+          <div style="padding: 0.75rem 1rem; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);">
+            <strong style="color: #FFF;">2. Luggage Porterage SLA:</strong>
+            <span style="color: var(--text-muted); display: block; margin-top: 2px;">Dispatched with 8-minute SLA guarantee to bell captain terminal.</span>
+          </div>
+
+          <div style="padding: 0.75rem 1rem; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);">
+            <strong style="color: #FFF;">3. One-Click Discretion Protocols:</strong>
+            <span style="color: var(--text-muted); display: block; margin-top: 2px;">Station 04 can issue complimentary lounge access or spa credits in 1 click.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Ticket Confirmation Display -->
+      <div id="ticketConfirmationCard" class="panel" style="display: none; border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.06);">
+        <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--emerald); font-weight: 800; font-size: 0.95rem; margin-bottom: 0.75rem;">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+          <span>Support Ticket Dispatched</span>
+        </div>
+        <div class="mono" style="font-size: 0.78rem; line-height: 1.8;">
+          <div>Ticket Reference: <strong id="resTicketId" style="color: #FFF;">-</strong></div>
+          <div>Guest: <span id="resTicketGuest" style="color: #FFF;">-</span></div>
+          <div>Department: <span id="resTicketDept" style="color: var(--gold);">-</span></div>
+          <div>Priority SLA: <span id="resTicketPriority" class="chip chip-vermilion">-</span></div>
+          <div>Status: <span style="color: var(--emerald);">DISPATCHED TO STATION 04</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+async function handleTicketSubmit(e) {
+  e.preventDefault();
+  const btn = document.getElementById('ticketSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Dispatching to Station 04...';
+
+  const payload = {
+    guest_name: document.getElementById('ticketGuestName').value,
+    guest_email: document.getElementById('ticketEmail').value,
+    hotel_name: document.getElementById('ticketHotel').value,
+    room_number: document.getElementById('ticketRoom').value,
+    category: document.getElementById('ticketCategory').value,
+    priority: document.getElementById('ticketPriority').value,
+    subject: document.getElementById('ticketSubject').value,
+    description: document.getElementById('ticketDescription').value,
+  };
+
+  try {
+    const res = await fetch('/api/support-tickets/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken') || '',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    if (res.ok && data.status === 'success') {
+      const t = data.ticket;
+      const card = document.getElementById('ticketConfirmationCard');
+      card.style.display = 'block';
+
+      document.getElementById('resTicketId').textContent = t.id;
+      document.getElementById('resTicketGuest').textContent = `${t.guest_name} (${t.room_number})`;
+      document.getElementById('resTicketDept').textContent = t.category;
+      document.getElementById('resTicketPriority').textContent = t.priority;
+
+      showToast(`Support Ticket ${t.id} dispatched!`, 'info');
+      card.scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('supportTicketForm').reset();
+    } else {
+      throw new Error(data.error || 'Failed to dispatch ticket.');
+    }
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Dispatch Ticket to Duty Station';
+  }
+}
+</script>
+{% endblock %}

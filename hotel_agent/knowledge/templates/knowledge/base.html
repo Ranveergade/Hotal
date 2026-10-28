@@ -1,0 +1,116 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ page_title|default:"THREAD / HOTEL INTELLIGENCE" }}</title>
+  <meta name="description" content="THREAD / HOTEL INTELLIGENCE — Autonomous luxury hotel operations, grounded RAG policies, and NVIDIA NIM conversational concierge.">
+  <link rel="stylesheet" href="{% static 'knowledge/css/thread.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- ================= TOP NAVIGATION ================= -->
+  <header class="thread-header">
+    <div class="container nav-container">
+      <a href="{% url 'knowledge_pages:landing' %}" class="brand-monogram">
+        <div class="brand-symbol">T</div>
+        <div>
+          <span class="brand-name">THREAD</span>
+          <span class="brand-sub">Hotel Intelligence</span>
+        </div>
+      </a>
+
+      <!-- Desktop Links -->
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{% url 'knowledge_pages:landing' %}">Home</a></li>
+          <li><a href="{% url 'knowledge_pages:hotels' %}">Discover Hotels</a></li>
+          <li><a href="{% url 'knowledge_pages:assistant' %}">AI Concierge</a></li>
+          <li><a href="{% url 'knowledge_pages:booking' %}">Book a Stay</a></li>
+          <li><a href="{% url 'knowledge_pages:bookings' %}">Reservations</a></li>
+          <li><a href="{% url 'knowledge_pages:support' %}">Guest Support</a></li>
+          <li><a href="{% url 'knowledge_pages:staff' %}">Staff Operations</a></li>
+        </ul>
+      </nav>
+
+      <!-- Right CTAs & Badges -->
+      <div class="nav-actions">
+        <div class="status-badge">
+          <span class="status-dot"></span>
+          <span>NVIDIA gpt-oss-20b</span>
+        </div>
+        <a href="{% url 'knowledge_pages:assistant' %}" class="btn btn-primary" style="padding: 0.45rem 0.95rem; font-size: 0.72rem;">
+          Concierge Desk
+        </a>
+        <button id="mobileToggle" class="mobile-toggle" aria-label="Toggle Navigation">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= MAIN VIEWPORT CONTENT ================= -->
+  <main style="flex: 1;">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ================= EDITORIAL FOOTER ================= -->
+  <footer class="thread-footer">
+    <div class="container">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2rem; margin-bottom: 2.5rem;">
+        <div style="max-width: 360px;">
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+            <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--vermilion);"></div>
+            <span style="font-family: var(--font-serif); font-size: 1.05rem; font-weight: 800; color: #FFF; letter-spacing: 0.1em;">THREAD / HOTEL INTELLIGENCE</span>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.6;">
+            A complete connected operations platform for modern hospitality. Engineered with strict SOP RAG grounding, real-time PMS inventory lookup, and human escalation protocols.
+          </p>
+        </div>
+
+        <div>
+          <h4 style="font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-primary); margin-bottom: 0.75rem;">Guest Platform</h4>
+          <ul style="list-style: none; font-family: var(--font-mono); font-size: 0.78rem; line-height: 2;">
+            <li><a href="{% url 'knowledge_pages:hotels' %}" style="color: var(--text-muted); text-decoration: none;">Hotel Directory</a></li>
+            <li><a href="{% url 'knowledge_pages:assistant' %}" style="color: var(--text-muted); text-decoration: none;">AI Concierge Desk</a></li>
+            <li><a href="{% url 'knowledge_pages:booking' %}" style="color: var(--text-muted); text-decoration: none;">Direct Room Booking</a></li>
+            <li><a href="{% url 'knowledge_pages:bookings' %}" style="color: var(--text-muted); text-decoration: none;">Reservation Records</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 style="font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-primary); margin-bottom: 0.75rem;">Operations &amp; Staff</h4>
+          <ul style="list-style: none; font-family: var(--font-mono); font-size: 0.78rem; line-height: 2;">
+            <li><a href="{% url 'knowledge_pages:staff' %}" style="color: var(--text-muted); text-decoration: none;">Staff Dashboard</a></li>
+            <li><a href="{% url 'knowledge_pages:support' %}" style="color: var(--text-muted); text-decoration: none;">Service Task Dispatch</a></li>
+            <li><a href="{% url 'knowledge_pages:diagnostics' %}" style="color: var(--text-muted); text-decoration: none;">RAG Knowledge Diagnostics</a></li>
+            <li><a href="/admin/" style="color: var(--text-muted); text-decoration: none;">Django Admin</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 style="font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-primary); margin-bottom: 0.75rem;">Verified APIs</h4>
+          <ul style="list-style: none; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); line-height: 2;">
+            <li><code>POST /api/ai-assistant/</code></li>
+            <li><code>GET  /api/indian-hotels/</code></li>
+            <li><code>POST /api/booking/create/</code></li>
+            <li><code>POST /api/support-tickets/</code></li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="border-top: 1px solid var(--border-subtle); padding-top: 1.5rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; font-family: var(--font-mono); font-size: 0.72rem;">
+        <div>&copy; 2026 THREAD Hospitality Intelligence System. All rights reserved.</div>
+        <div style="color: var(--vermilion);">SOP Enforced • Zero Speculative Booking State</div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="{% static 'knowledge/js/thread.js' %}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

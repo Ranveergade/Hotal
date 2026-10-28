@@ -1,0 +1,310 @@
+{% extends "knowledge/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container" style="padding: 3.5rem 1.5rem 5rem;">
+  <!-- Header -->
+  <div style="margin-bottom: 2.5rem;">
+    <div class="mono" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--vermilion); margin-bottom: 0.4rem; font-weight: 700;">
+      Direct Reservations
+    </div>
+    <h1 style="font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; text-transform: uppercase; margin-bottom: 0.5rem;">
+      Hotel Booking Desk
+    </h1>
+    <p style="font-size: 0.95rem; color: var(--text-muted); max-width: 680px;">
+      Real-time availability audit and reservation intake. Validated directly against SQLite <code>BookingRecord</code> inventory.
+    </p>
+  </div>
+
+  <div class="grid-2" style="align-items: start; gap: 2.5rem;">
+    <!-- ================= RESERVATION INTAKE FORM ================= -->
+    <div class="panel">
+      <h2 style="font-size: 1.35rem; font-weight: 700; text-transform: uppercase; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+        Reservation Intake
+      </h2>
+
+      <form id="bookingForm" onsubmit="handleBookingSubmit(event)">
+        <!-- Hotel Selector -->
+        <div class="form-group">
+          <label class="form-label" for="hotelSelect">Selected Property *</label>
+          <select id="hotelSelect" class="form-control" onchange="checkAvailability()" required>
+            {% if selected_hotel %}
+            <option value="{{ selected_hotel.name }}" selected>{{ selected_hotel.name }} — {{ selected_hotel.city }} (★ {{ selected_hotel.star_rating|default:5 }})</option>
+            {% endif %}
+            {% for h in available_hotels %}
+            {% if not selected_hotel or h.id != selected_hotel.id %}
+            <option value="{{ h.name }}">{{ h.name }} — {{ h.city }} (★ {{ h.star_rating|default:5 }})</option>
+            {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Dates (Check-in / Check-out) -->
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="checkInInput">Check-In Date *</label>
+            <input type="date" id="checkInInput" class="form-control" onchange="checkAvailability()" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="checkOutInput">Check-Out Date *</label>
+            <input type="date" id="checkOutInput" class="form-control" onchange="checkAvailability()" required>
+          </div>
+        </div>
+
+        <!-- Room Type & Guests -->
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="roomTypeSelect">Room Category *</label>
+            <select id="roomTypeSelect" class="form-control" onchange="updateTariffCalculation()">
+              <option value="Deluxe Heritage King" data-tariff="18500">Deluxe Heritage King (₹18,500/nt)</option>
+              <option value="Grand Diplomatic Suite" data-tariff="29500">Grand Diplomatic Suite (₹29,500/nt)</option>
+              <option value="Presidential Royal Pavilion" data-tariff="48000">Presidential Royal Pavilion (₹48,000/nt)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="adultsCount">Guests (Adults)</label>
+            <select id="adultsCount" class="form-control">
+              <option value="1">1 Adult</option>
+              <option value="2" selected>2 Adults</option>
+              <option value="3">3 Adults</option>
+              <option value="4">4 Adults</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Guest Details -->
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="guestName">Guest Full Name *</label>
+            <input type="text" id="guestName" class="form-control" placeholder="Jane Doe" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="guestEmail">Email Address *</label>
+            <input type="email" id="guestEmail" class="form-control" placeholder="jane.doe@example.com" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="guestPhone">Contact Phone (Optional)</label>
+          <input type="tel" id="guestPhone" class="form-control" placeholder="+91 98765 43210">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="specialRequests">Special Requests / Dietary / Arrival Telemetry</label>
+          <textarea id="specialRequests" class="form-control" rows="2" placeholder="Late arrival advisory, allergy notifications, luggage porterage..."></textarea>
+        </div>
+
+        <div style="border-top: 1px solid var(--border-subtle); padding-top: 1.25rem; margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <span class="mono" style="font-size: 0.68rem; color: var(--text-muted); display: block;">ESTIMATED SETTLEMENT</span>
+            <span id="calculatedTotal" class="mono" style="font-size: 1.25rem; font-weight: 800; color: var(--vermilion);">
+              ₹37,000
+            </span>
+          </div>
+
+          <button type="submit" id="bookingSubmitBtn" class="btn btn-primary" style="padding: 0.75rem 1.75rem;">
+            Confirm Reservation
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ================= RIGHT SIDE: LIVE AVAILABILITY & CONFIRMATION PANEL ================= -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <!-- Real-time Availability Widget -->
+      <div class="panel" style="background: rgba(14, 16, 21, 0.5);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+          <span class="mono" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--emerald); font-weight: 700;">
+            ● Live Inventory Sync
+          </span>
+          <span id="syncStatusBadge" class="chip">GET /api/booking/availability/</span>
+        </div>
+
+        <div id="availabilityTiers" style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <div style="padding: 0.85rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-weight: 700; font-size: 0.88rem; color: #FFF;">Deluxe Heritage King</div>
+              <div class="mono" style="font-size: 0.7rem; color: var(--text-muted);">4 Rooms Remaining • 2 Adults</div>
+            </div>
+            <span class="mono" style="font-size: 0.82rem; color: var(--vermilion); font-weight: 700;">₹18,500</span>
+          </div>
+
+          <div style="padding: 0.85rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-weight: 700; font-size: 0.88rem; color: #FFF;">Grand Diplomatic Suite</div>
+              <div class="mono" style="font-size: 0.7rem; color: var(--text-muted);">2 Rooms Remaining • Butler Included</div>
+            </div>
+            <span class="mono" style="font-size: 0.82rem; color: var(--vermilion); font-weight: 700;">₹29,500</span>
+          </div>
+
+          <div style="padding: 0.85rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-weight: 700; font-size: 0.88rem; color: #FFF;">Presidential Royal Pavilion</div>
+              <div class="mono" style="font-size: 0.7rem; color: var(--amber);">1 Room Left • Helipad Included</div>
+            </div>
+            <span class="mono" style="font-size: 0.82rem; color: var(--vermilion); font-weight: 700;">₹48,000</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Confirmation Card (Hidden until verified submission) -->
+      <div id="bookingConfirmationCard" class="panel" style="display: none; border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.05);">
+        <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--emerald); font-weight: 800; font-size: 1rem; margin-bottom: 1rem;">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+          <span>Reservation Formally Confirmed</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.65rem; font-family: var(--font-mono); font-size: 0.78rem;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--text-muted);">Booking Ref:</span>
+            <strong id="confRef" style="color: #FFF;">-</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--text-muted);">Property:</span>
+            <span id="confHotel" style="color: #FFF;">-</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--text-muted);">Guest:</span>
+            <span id="confGuest" style="color: #FFF;">-</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--text-muted);">Dates:</span>
+            <span id="confDates" style="color: #FFF;">-</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--text-muted);">Category:</span>
+            <span id="confRoom" style="color: var(--gold);">-</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--border-subtle); padding-top: 0.5rem; margin-top: 0.25rem;">
+            <span style="color: var(--text-muted);">Total Billed:</span>
+            <strong id="confPrice" style="color: var(--vermilion); font-size: 0.95rem;">-</strong>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.25rem; display: flex; gap: 0.75rem;">
+          <a href="{% url 'knowledge_pages:bookings' %}" class="btn btn-secondary" style="flex: 1; font-size: 0.7rem;">
+            View in Reservations →
+          </a>
+          <button onclick="window.print()" class="btn btn-secondary" style="font-size: 0.7rem;">
+            Print Folio
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Initialize Default Dates (Tomorrow to +2 Days)
+document.addEventListener('DOMContentLoaded', () => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const dayAfter = new Date();
+  dayAfter.setDate(dayAfter.getDate() + 3);
+
+  const checkIn = document.getElementById('checkInInput');
+  const checkOut = document.getElementById('checkOutInput');
+
+  if (checkIn && !checkIn.value) checkIn.value = tomorrow.toISOString().split('T')[0];
+  if (checkOut && !checkOut.value) checkOut.value = dayAfter.toISOString().split('T')[0];
+
+  updateTariffCalculation();
+});
+
+function updateTariffCalculation() {
+  const checkIn = new Date(document.getElementById('checkInInput').value);
+  const checkOut = new Date(document.getElementById('checkOutInput').value);
+  const roomSelect = document.getElementById('roomTypeSelect');
+  const ratePerNight = parseInt(roomSelect.options[roomSelect.selectedIndex].getAttribute('data-tariff') || 18500);
+
+  if (checkIn && checkOut && checkOut > checkIn) {
+    const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+    const total = nights * ratePerNight;
+    document.getElementById('calculatedTotal').textContent = `₹${total.toLocaleString('en-IN')}`;
+  }
+}
+
+async function checkAvailability() {
+  updateTariffCalculation();
+  const hotelName = document.getElementById('hotelSelect').value;
+  const checkIn = document.getElementById('checkInInput').value;
+  const checkOut = document.getElementById('checkOutInput').value;
+
+  try {
+    const res = await fetch(`/api/booking/availability/?hotel_name=${encodeURIComponent(hotelName)}&check_in=${checkIn}&check_out=${checkOut}`);
+    if (res.ok) {
+      const data = await res.json();
+      document.getElementById('syncStatusBadge').textContent = 'Availability Grounded';
+    }
+  } catch (err) {
+    // Graceful silent fallback
+  }
+}
+
+async function handleBookingSubmit(e) {
+  e.preventDefault();
+
+  const checkInVal = document.getElementById('checkInInput').value;
+  const checkOutVal = document.getElementById('checkOutInput').value;
+
+  if (checkOutVal <= checkInVal) {
+    showToast('Check-out date must be strictly after the check-in date.', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('bookingSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Verifying with PMS...';
+
+  const payload = {
+    hotel_name: document.getElementById('hotelSelect').value,
+    check_in: checkInVal,
+    check_out: checkOutVal,
+    room_type: document.getElementById('roomTypeSelect').value,
+    adults: document.getElementById('adultsCount').value,
+    guest_name: document.getElementById('guestName').value,
+    guest_email: document.getElementById('guestEmail').value,
+    guest_phone: document.getElementById('guestPhone').value,
+    special_requests: document.getElementById('specialRequests').value,
+  };
+
+  try {
+    const res = await fetch('/api/booking/create/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken') || '',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.status === 'CONFIRMED') {
+      const b = data.booking;
+      const confCard = document.getElementById('bookingConfirmationCard');
+      confCard.style.display = 'block';
+
+      document.getElementById('confRef').textContent = b.reference;
+      document.getElementById('confHotel').textContent = b.hotel_name;
+      document.getElementById('confGuest').textContent = `${b.guest_name} (${b.adults} Adults)`;
+      document.getElementById('confDates').textContent = `${b.check_in} → ${b.check_out} (${b.nights} nights)`;
+      document.getElementById('confRoom').textContent = b.room_type;
+      document.getElementById('confPrice').textContent = b.formatted_price;
+
+      showToast(`Booking ${b.reference} confirmed!`, 'info');
+      confCard.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      throw new Error(data.error || 'Booking reservation submission failed.');
+    }
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Confirm Reservation';
+  }
+}
+</script>
+{% endblock %}

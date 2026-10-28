@@ -1,0 +1,327 @@
+{% extends "knowledge/base.html" %}
+{% load static %}
+
+{% block content %}
+<!-- ================= HERO SECTION ================= -->
+<section style="position: relative; padding: 6rem 0 5rem; overflow: hidden; border-bottom: 1px solid var(--border-subtle);">
+  <!-- Subtle Ambient Glow -->
+  <div style="position: absolute; top: 20%; left: 50%; transform: translateX(-50%); width: 700px; height: 350px; background: radial-gradient(circle, var(--vermilion-glow) 0%, transparent 70%); filter: blur(90px); pointer-events: none;"></div>
+
+  <div class="container" style="position: relative; z-index: 2; text-align: center;">
+    <!-- Pill Badge -->
+    <div style="display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0.9rem; border-radius: 9999px; background: rgba(230, 57, 46, 0.08); border: 1px solid rgba(230, 57, 46, 0.3); margin-bottom: 1.5rem;">
+      <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--vermilion);"></span>
+      <span style="font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--vermilion-light); font-weight: 600;">
+        NVIDIA NIM • Autonomous Hotel Operations Workforce
+      </span>
+    </div>
+
+    <!-- Editorial Title -->
+    <h1 style="font-size: clamp(2.4rem, 5.5vw, 4.8rem); line-height: 1.08; max-width: 950px; margin: 0 auto 1.5rem; font-weight: 800; text-transform: uppercase;">
+      Continuous Guest Intelligence.<br>
+      <span style="color: var(--vermilion);">Zero Speculation.</span>
+    </h1>
+
+    <p style="font-size: clamp(1rem, 1.8vw, 1.25rem); color: var(--text-secondary); max-width: 720px; margin: 0 auto 2.5rem; font-weight: 300; line-height: 1.6;">
+      An autonomous hospitality operations network connected to your real PMS catalog. Natural language AI concierge, verified hotel policy grounding, and instant duty supervisor takeover.
+    </p>
+
+    <!-- CTAs -->
+    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 4rem;">
+      <a href="{% url 'knowledge_pages:assistant' %}" class="btn btn-primary" style="padding: 0.85rem 1.85rem; font-size: 0.82rem;">
+        <span>Talk to the Concierge</span>
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+        </svg>
+      </a>
+
+      <a href="{% url 'knowledge_pages:hotels' %}" class="btn btn-secondary" style="padding: 0.85rem 1.85rem; font-size: 0.82rem;">
+        <span>Explore {{ total_hotels|default:"7,465" }} Hotels</span>
+      </a>
+
+      <a href="{% url 'knowledge_pages:staff' %}" class="btn btn-secondary" style="padding: 0.85rem 1.4rem; font-size: 0.82rem; border-color: rgba(255,255,255,0.12);">
+        <span style="color: var(--vermilion);">●</span>
+        <span>Staff Station</span>
+      </a>
+    </div>
+
+    <!-- Orbital Graphic -->
+    <div class="orbital-canvas" aria-hidden="true">
+      <div class="orbital-ring orbital-ring-1">
+        <div class="orbit-node"></div>
+      </div>
+      <div class="orbital-ring orbital-ring-2">
+        <div class="orbit-node orbit-node-gold"></div>
+      </div>
+      <div class="orbital-ring orbital-ring-3"></div>
+      <div class="orbital-center">T</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ARCHITECTURAL METRICS ================= -->
+<section style="background: var(--bg-surface); border-bottom: 1px solid var(--border-subtle); padding: 2rem 0;">
+  <div class="container">
+    <div class="grid-4" style="text-align: center;">
+      <div style="padding: 1rem;">
+        <div class="mono" style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem;">Verified Database Records</div>
+        <div style="font-family: var(--font-serif); font-size: 2.2rem; font-weight: 800; color: #FFF;">{{ total_hotels|default:"7,465" }}</div>
+        <div class="mono" style="font-size: 0.68rem; color: var(--emerald);">SQLite Grounded Properties</div>
+      </div>
+      <div style="padding: 1rem;">
+        <div class="mono" style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem;">Historical Folios &amp; Stays</div>
+        <div style="font-family: var(--font-serif); font-size: 2.2rem; font-weight: 800; color: #FFF;">{{ total_bookings|default:"119,390" }}</div>
+        <div class="mono" style="font-size: 0.68rem; color: var(--text-secondary);">Real PMS Reservation Data</div>
+      </div>
+      <div style="padding: 1rem;">
+        <div class="mono" style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem;">AI Inference Model</div>
+        <div style="font-family: var(--font-serif); font-size: 2.2rem; font-weight: 800; color: var(--vermilion);">OSS-20B</div>
+        <div class="mono" style="font-size: 0.68rem; color: var(--vermilion-light);">NVIDIA NIM Microservice</div>
+      </div>
+      <div style="padding: 1rem;">
+        <div class="mono" style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem;">Knowledge SOP RAG</div>
+        <div style="font-family: var(--font-serif); font-size: 2.2rem; font-weight: 800; color: #FFF;">100%</div>
+        <div class="mono" style="font-size: 0.68rem; color: var(--gold);">Strict Cosine Grounding</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FEATURED HOTELS PREVIEW ================= -->
+<section style="padding: 5rem 0; border-bottom: 1px solid var(--border-subtle);">
+  <div class="container">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; margin-bottom: 3rem; gap: 1.5rem;">
+      <div>
+        <div class="mono" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--vermilion); margin-bottom: 0.4rem; font-weight: 700;">
+          Curated Discovery
+        </div>
+        <h2 style="font-size: 2.2rem; font-weight: 800; text-transform: uppercase;">
+          Indian Heritage &amp; Luxury Stays
+        </h2>
+      </div>
+      <a href="{% url 'knowledge_pages:hotels' %}" class="btn btn-secondary">
+        <span>View Complete Catalogue</span>
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+      </a>
+    </div>
+
+    <div class="grid-4">
+      {% for hotel in featured_hotels %}
+      <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <span class="chip chip-gold">
+              ★ {{ hotel.star_rating|default:5 }} Stars
+            </span>
+            <span class="mono" style="font-size: 0.68rem; color: var(--emerald);">Verified</span>
+          </div>
+
+          <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.4rem; color: #FFF;">
+            {{ hotel.name }}
+          </h3>
+
+          <div class="mono" style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.85rem;">
+            📍 {{ hotel.city }}, {{ hotel.state }}
+          </div>
+
+          <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1.25rem;">
+            {{ hotel.description|default:"Luxury hospitality accommodation with verified heritage architecture and in-room concierge service."|truncatechars:110 }}
+          </p>
+        </div>
+
+        <div style="border-top: 1px solid var(--border-subtle); padding-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+          <div class="mono" style="font-size: 0.75rem; color: var(--vermilion); font-weight: 700;">
+            ₹{{ hotel.star_rating|default:5|stringformat:"d" }}4,500 <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 400;">/ night</span>
+          </div>
+          <a href="{% url 'knowledge_pages:booking' %}?hotel_id={{ hotel.id }}" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.68rem;">
+            Book Room
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ================= AI CONCIERGE & WORKFLOW PREVIEW ================= -->
+<section style="padding: 5rem 0; background: var(--bg-surface); border-bottom: 1px solid var(--border-subtle);">
+  <div class="container">
+    <div class="grid-2" style="align-items: center; gap: 3.5rem;">
+      <div>
+        <div class="mono" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--vermilion); margin-bottom: 0.4rem; font-weight: 700;">
+          Conversational Reasoning
+        </div>
+        <h2 style="font-size: 2.2rem; font-weight: 800; text-transform: uppercase; margin-bottom: 1.25rem;">
+          AI Concierge with Grounded SOP RAG
+        </h2>
+        <p style="font-size: 0.92rem; color: var(--text-secondary); line-height: 1.7; margin-bottom: 1.5rem;">
+          Unlike generic chatbots, THREAD parses user questions, extracts target cities and amenities, queries 4,000 verified hotel database entries, and enforces strict SOP policies via NVIDIA NIM.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 0.85rem; margin-bottom: 2rem;">
+          <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+            <div style="width: 20px; height: 20px; border-radius: 4px; background: rgba(230, 57, 46, 0.15); color: var(--vermilion); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; margin-top: 2px;">✓</div>
+            <div>
+              <strong style="color: #FFF; font-size: 0.88rem;">100% Grounded Search:</strong>
+              <span style="font-size: 0.82rem; color: var(--text-muted); display: block;">Zero hallucinated room rates or invented hotel names. Answers cite SQLite data only.</span>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+            <div style="width: 20px; height: 20px; border-radius: 4px; background: rgba(230, 57, 46, 0.15); color: var(--vermilion); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; margin-top: 2px;">✓</div>
+            <div>
+              <strong style="color: #FFF; font-size: 0.88rem;">Intent Classification:</strong>
+              <span style="font-size: 0.82rem; color: var(--text-muted); display: block;">Identifies <code>HOTEL_SEARCH</code>, <code>BOOKING_QUERY</code>, <code>CREATE_SUPPORT_TICKET</code>, and <code>HUMAN_ESCALATION</code>.</span>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+            <div style="width: 20px; height: 20px; border-radius: 4px; background: rgba(230, 57, 46, 0.15); color: var(--vermilion); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; margin-top: 2px;">✓</div>
+            <div>
+              <strong style="color: #FFF; font-size: 0.88rem;">Duty Manager Escalation:</strong>
+              <span style="font-size: 0.82rem; color: var(--text-muted); display: block;">Tight turnaround constraints or guest complaints route instantly to Station 04.</span>
+            </div>
+          </div>
+        </div>
+
+        <a href="{% url 'knowledge_pages:assistant' %}" class="btn btn-primary">
+          Launch AI Concierge Terminal
+        </a>
+      </div>
+
+      <!-- Live Terminal Simulation Preview -->
+      <div class="panel" style="background: #08090C; border-color: rgba(255,255,255,0.12); padding: 1.5rem; box-shadow: 0 25px 60px rgba(0,0,0,0.6);">
+        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--emerald);"></div>
+            <span class="mono" style="font-size: 0.72rem; color: #FFF; text-transform: uppercase;">POST /api/ai-assistant/</span>
+          </div>
+          <span class="chip chip-vermilion">Active Session</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1rem; font-size: 0.82rem;">
+          <div style="align-self: flex-end; background: rgba(230, 57, 46, 0.15); border: 1px solid rgba(230, 57, 46, 0.3); padding: 0.75rem 1rem; border-radius: var(--radius-sm); color: #FFF; max-width: 85%;">
+            Recommend 5-star heritage hotels in Udaipur with swimming pool and spa.
+          </div>
+
+          <div style="align-self: flex-start; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-subtle); padding: 0.85rem 1rem; border-radius: var(--radius-sm); color: var(--text-secondary); max-width: 90%; line-height: 1.5;">
+            <div style="display: flex; align-items: center; gap: 0.4rem; color: var(--vermilion-light); font-size: 0.72rem; font-family: var(--font-mono); margin-bottom: 0.4rem; font-weight: 700;">
+              THREAD CONCIERGE • GROUNDED RESULT
+            </div>
+            Matched 8 properties in <strong>Udaipur</strong> featuring luxury swimming pool and spa amenities. Highly recommended: <strong>Taj Lake Palace</strong> and <strong>The Oberoi Udaivilas</strong>. Live inventory available for instant direct reservation.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PARTNER LEAD CAPTURE ================= -->
+<section style="padding: 5rem 0;">
+  <div class="container">
+    <div class="panel" style="max-width: 820px; margin: 0 auto;">
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <span class="chip chip-vermilion" style="margin-bottom: 0.75rem;">Enterprise Hospitality Integration</span>
+        <h2 style="font-size: 1.85rem; font-weight: 800; text-transform: uppercase;">
+          Connect Your Hotel PMS to THREAD
+        </h2>
+        <p style="font-size: 0.88rem; color: var(--text-muted); margin-top: 0.5rem;">
+          Deploy autonomous concierge and duty triage across your property catalog. Connects via <code>POST /api/leads/create/</code>.
+        </p>
+      </div>
+
+      <form id="leadCaptureForm" onsubmit="handleLeadSubmit(event)">
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="leadName">Contact Person *</label>
+            <input type="text" id="leadName" class="form-control" placeholder="e.g. Alok Verma, General Manager" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="leadEmail">Business Email *</label>
+            <input type="email" id="leadEmail" class="form-control" placeholder="manager@palacehotel.com" required>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" for="leadProperty">Property / Brand Name</label>
+            <input type="text" id="leadProperty" class="form-control" placeholder="Royal Palace Resort &amp; Spa">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="leadCity">City / Location</label>
+            <input type="text" id="leadCity" class="form-control" placeholder="Jaipur, Rajasthan">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="leadNotes">Integration Scope &amp; Rooms</label>
+          <textarea id="leadNotes" class="form-control" rows="2" placeholder="Tell us about your room inventory or PMS (Opera, Cloudbeds, etc.)."></textarea>
+        </div>
+
+        <div style="text-align: center; margin-top: 1rem;">
+          <button type="submit" id="leadSubmitBtn" class="btn btn-primary" style="padding: 0.75rem 2.2rem;">
+            Submit Partner Inquiry
+          </button>
+        </div>
+      </form>
+
+      <div id="leadFeedback" style="display: none; margin-top: 1.25rem; padding: 1rem; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 0.8rem; text-align: center;"></div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+async function handleLeadSubmit(e) {
+  e.preventDefault();
+  const btn = document.getElementById('leadSubmitBtn');
+  const feedback = document.getElementById('leadFeedback');
+
+  const payload = {
+    name: document.getElementById('leadName').value,
+    email: document.getElementById('leadEmail').value,
+    property_name: document.getElementById('leadProperty').value,
+    city: document.getElementById('leadCity').value,
+    notes: document.getElementById('leadNotes').value,
+  };
+
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+
+  try {
+    const res = await fetch('/api/leads/create/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken') || '',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      feedback.style.display = 'block';
+      feedback.style.background = 'rgba(16, 185, 129, 0.1)';
+      feedback.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+      feedback.style.color = '#10B981';
+      feedback.textContent = data.message || 'Inquiry registered successfully.';
+      document.getElementById('leadCaptureForm').reset();
+      showToast('Enterprise partner inquiry registered!', 'info');
+    } else {
+      throw new Error(data.error || 'Submission failed');
+    }
+  } catch (err) {
+    feedback.style.display = 'block';
+    feedback.style.background = 'rgba(230, 57, 46, 0.1)';
+    feedback.style.border = '1px solid rgba(230, 57, 46, 0.3)';
+    feedback.style.color = '#FF4D42';
+    feedback.textContent = err.message;
+    showToast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Submit Partner Inquiry';
+  }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,130 @@
+{% extends "knowledge/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container" style="padding: 3.5rem 1.5rem 5rem;">
+  <!-- Header -->
+  <div style="margin-bottom: 2.5rem;">
+    <div class="mono" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--vermilion); margin-bottom: 0.4rem; font-weight: 700;">
+      Staff &amp; Developer Internal
+    </div>
+    <h1 style="font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; text-transform: uppercase; margin-bottom: 0.5rem;">
+      RAG Retrieval Diagnostics
+    </h1>
+    <p style="font-size: 0.95rem; color: var(--text-muted); max-width: 680px;">
+      Direct diagnostic inspection of vector embeddings, cosine similarity scores, and SOP article ranking via <code>GET /api/test-retrieval/?q=...</code>.
+    </p>
+  </div>
+
+  <div class="grid-2" style="align-items: start; gap: 2.5rem;">
+    <!-- Interactive Query Tester -->
+    <div class="panel">
+      <h2 style="font-size: 1.25rem; font-weight: 700; text-transform: uppercase; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+        Query Cosine Semantic Engine
+      </h2>
+
+      <form id="diagnosticsForm" onsubmit="handleTestRetrieval(event)">
+        <div class="form-group">
+          <label class="form-label" for="diagQuery">Test Query / Policy Question</label>
+          <input type="text" id="diagQuery" class="form-control" placeholder="e.g. Can we request a 2:30 PM late checkout?" value="What is the policy for late checkout?" required>
+        </div>
+
+        <div style="margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+          <span class="mono" style="font-size: 0.68rem; color: var(--text-muted);">Quick Prompts:</span>
+          <button type="button" onclick="setDiagPrompt('Late checkout policy')" class="chip">Late Checkout</button>
+          <button type="button" onclick="setDiagPrompt('Luggage porterage delivery time')" class="chip">Luggage SLA</button>
+          <button type="button" onclick="setDiagPrompt('Centurion guest benefits')" class="chip">Centurion SOP</button>
+        </div>
+
+        <button type="submit" id="diagSubmitBtn" class="btn btn-primary" style="width: 100%;">
+          Run Retrieval Test
+        </button>
+      </form>
+
+      <!-- Live Results Area -->
+      <div id="diagResultsArea" style="margin-top: 1.75rem; display: none;">
+        <div class="mono" style="font-size: 0.72rem; color: var(--vermilion-light); text-transform: uppercase; font-weight: 700; margin-bottom: 0.75rem;">
+          Retrieval Results:
+        </div>
+        <div id="diagResultsList" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
+      </div>
+    </div>
+
+    <!-- Active SOP Knowledge Base Articles -->
+    <div class="panel">
+      <h2 style="font-size: 1.25rem; font-weight: 700; text-transform: uppercase; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+        Grounding Knowledge Index ({{ articles.count }} SOP Articles)
+      </h2>
+
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for art in articles %}
+        <div style="padding: 1rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+            <strong style="color: #FFF; font-size: 0.9rem;">{{ art.title }}</strong>
+            <span class="chip chip-gold" style="font-size: 0.65rem;">{{ art.category }}</span>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5;">
+            {{ art.content }}
+          </p>
+        </div>
+        {% empty %}
+        <div class="mono" style="font-size: 0.78rem; color: var(--text-muted); text-align: center; padding: 2rem;">
+          No SOP knowledge articles currently indexed.
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function setDiagPrompt(q) {
+  document.getElementById('diagQuery').value = q;
+  handleTestRetrieval(new Event('submit'));
+}
+
+async function handleTestRetrieval(e) {
+  e.preventDefault();
+  const q = document.getElementById('diagQuery').value.trim();
+  const btn = document.getElementById('diagSubmitBtn');
+  const resultsArea = document.getElementById('diagResultsArea');
+  const resultsList = document.getElementById('diagResultsList');
+
+  btn.disabled = true;
+  btn.textContent = 'Calculating Vector Cosine Similarity...';
+  resultsArea.style.display = 'block';
+  resultsList.innerHTML = `<div class="mono" style="font-size: 0.75rem; color: var(--text-muted);">Querying /api/test-retrieval/?q=${encodeURIComponent(q)}...</div>`;
+
+  try {
+    const res = await fetch(`/api/test-retrieval/?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+
+    if (data.results && data.results.length > 0) {
+      resultsList.innerHTML = data.results.map(r => `
+        <div style="padding: 0.85rem; background: rgba(0,0,0,0.5); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); font-size: 0.8rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+            <strong style="color: #FFF;">${escapeHtml(r.title)}</strong>
+            <span class="chip chip-emerald" style="font-size: 0.65rem;">Score: ${r.score}</span>
+          </div>
+          <div class="mono" style="font-size: 0.68rem; color: var(--gold); margin-bottom: 0.35rem;">Category: ${escapeHtml(r.category)}</div>
+          <p style="color: var(--text-secondary); line-height: 1.4;">${escapeHtml(r.content)}</p>
+        </div>
+      `).join('');
+    } else {
+      resultsList.innerHTML = `
+        <div class="mono" style="padding: 1rem; background: rgba(255,255,255,0.03); border-radius: var(--radius-sm); font-size: 0.75rem; color: var(--text-muted);">
+          No SOP documents scored above the 0.30 cosine similarity threshold for this query.
+        </div>
+      `;
+    }
+  } catch (err) {
+    resultsList.innerHTML = `<div class="mono" style="color: var(--vermilion); font-size: 0.75rem;">Error: ${err.message}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Run Retrieval Test';
+  }
+}
+</script>
+{% endblock %}

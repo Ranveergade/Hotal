@@ -1,0 +1,144 @@
+{% extends "knowledge/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container" style="padding: 3.5rem 1.5rem 5rem;">
+  <!-- Header -->
+  <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; margin-bottom: 2.5rem; gap: 1rem;">
+    <div>
+      <div class="mono" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--vermilion); margin-bottom: 0.4rem; font-weight: 700;">
+        PMS Ledger
+      </div>
+      <h1 style="font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; text-transform: uppercase; margin-bottom: 0.5rem;">
+        Verified Reservations
+      </h1>
+      <p style="font-size: 0.95rem; color: var(--text-muted); max-width: 680px;">
+        Real-time audit log of active reservations, guest stays, and historical folios from the SQLite <code>BookingRecord</code> dataset ({{ total_count|default:"119,390" }} entries).
+      </p>
+    </div>
+
+    <div>
+      <a href="{% url 'knowledge_pages:booking' %}" class="btn btn-primary">
+        + New Direct Reservation
+      </a>
+    </div>
+  </div>
+
+  <!-- Filter & Search Bar -->
+  <div class="panel" style="margin-bottom: 2rem; padding: 1.25rem;">
+    <form id="bookingsSearchForm" onsubmit="handleFilterBookings(event)" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 260px;">
+        <input type="text" id="bookingFilterQuery" class="form-control" placeholder="Filter by hotel name, country, or status...">
+      </div>
+      <button type="submit" class="btn btn-secondary" style="height: 42px;">
+        Filter Ledger
+      </button>
+      <button type="button" onclick="resetBookingsFilter()" class="btn btn-secondary" style="height: 42px; border-color: rgba(255,255,255,0.08);">
+        Reset
+      </button>
+    </form>
+  </div>
+
+  <!-- Table Container -->
+  <div class="panel" style="padding: 0; overflow: hidden;">
+    <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">
+      <div class="mono" style="font-size: 0.75rem; color: #FFF; font-weight: 700; text-transform: uppercase;">
+        Live Folio Records Ledger
+      </div>
+      <span class="chip chip-emerald">Database Synchronized</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="thread-table">
+        <thead>
+          <tr>
+            <th>Folio ID</th>
+            <th>Hotel / Property</th>
+            <th>Arrival Window</th>
+            <th>Party Size</th>
+            <th>Room Category</th>
+            <th>ADR (Average Daily Rate)</th>
+            <th>Folio Status</th>
+          </tr>
+        </thead>
+        <tbody id="bookingsTableBody">
+          {% for b in bookings %}
+          <tr>
+            <td class="mono" style="color: var(--vermilion); font-weight: 700;">#BK-{{ b.id }}</td>
+            <td style="font-weight: 600; color: #FFF;">{{ b.hotel }}</td>
+            <td class="mono">{{ b.arrival_month }} {{ b.arrival_year }}</td>
+            <td class="mono">{{ b.adults }} Adults, {{ b.children|stringformat:"d" }} Children</td>
+            <td class="mono" style="color: var(--gold);">{{ b.reserved_room_type|default:"Deluxe King" }}</td>
+            <td class="mono" style="font-weight: 700; color: #FFF;">
+              {% if b.adr %}₹{{ b.adr|floatformat:0 }}{% else %}₹18,500{% endif %}
+            </td>
+            <td>
+              {% if b.is_canceled %}
+              <span class="chip chip-vermilion">Canceled</span>
+              {% elif b.reservation_status == "Check-Out" %}
+              <span class="chip chip-emerald">Check-Out</span>
+              {% else %}
+              <span class="chip chip-gold">{{ b.reservation_status|default:"Confirmed" }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+async function handleFilterBookings(e) {
+  e.preventDefault();
+  const query = document.getElementById('bookingFilterQuery').value.trim();
+  const tbody = document.getElementById('bookingsTableBody');
+
+  try {
+    const res = await fetch(`/api/bookings/?q=${encodeURIComponent(query)}&limit=35`);
+    if (!res.ok) throw new Error('Failed to query bookings API');
+    const data = await res.json();
+    const list = data.results || [];
+
+    if (list.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-muted); font-family: var(--font-mono);">
+            No reservation folios match "${escapeHtml(query)}".
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = list.map(b => `
+      <tr>
+        <td class="mono" style="color: var(--vermilion); font-weight: 700;">#BK-${b.id}</td>
+        <td style="font-weight: 600; color: #FFF;">${escapeHtml(b.hotel)}</td>
+        <td class="mono">${b.arrival_month} ${b.arrival_year || ''}</td>
+        <td class="mono">${b.adults} Adults, ${b.children} Children</td>
+        <td class="mono" style="color: var(--gold);">${escapeHtml(b.room_type || 'Deluxe King')}</td>
+        <td class="mono" style="font-weight: 700; color: #FFF;">₹${b.adr ? Math.round(b.adr).toLocaleString('en-IN') : '18,500'}</td>
+        <td>
+          <span class="chip ${b.is_canceled ? 'chip-vermilion' : (b.reservation_status === 'Check-Out' ? 'chip-emerald' : 'chip-gold')}">
+            ${escapeHtml(b.reservation_status || (b.is_canceled ? 'Canceled' : 'Confirmed'))}
+          </span>
+        </td>
+      </tr>
+    `).join('');
+
+    showToast(`Displaying ${list.length} reservation records.`, 'info');
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+function resetBookingsFilter() {
+  document.getElementById('bookingFilterQuery').value = '';
+  location.reload();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,195 @@
+{% extends "knowledge/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container" style="padding: 3.5rem 1.5rem 5rem;">
+  <!-- Header with Refresh Button & Emergency Protocol -->
+  <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; margin-bottom: 2.5rem; gap: 1rem;">
+    <div>
+      <div class="mono" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--vermilion); margin-bottom: 0.4rem; font-weight: 700;">
+        Shift Station 04
+      </div>
+      <h1 style="font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; text-transform: uppercase; margin-bottom: 0.5rem;">
+        Staff Operations Dashboard
+      </h1>
+      <p style="font-size: 0.95rem; color: var(--text-muted); max-width: 680px;">
+        Supervising autonomous AI concierge interactions, service task queues, and grounded hotel policy verifications.
+      </p>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem; align-items: center;">
+      <button onclick="refreshDashboardData()" id="refreshBtn" class="btn btn-secondary">
+        <span>↻ Refresh Operational Data</span>
+      </button>
+      <button onclick="toggleSupervisorEmergency()" id="emergencyBtn" class="btn btn-primary" style="background: #991B1B; border-color: #EF4444;">
+        <span>⚠ Emergency Takeover</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Operational Metrics Strip -->
+  <div class="grid-4" style="margin-bottom: 2.5rem;">
+    <div class="panel" style="padding: 1.5rem;">
+      <div class="mono" style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem;">Total Folios Recorded</div>
+      <div id="statBookings" style="font-family: var(--font-serif); font-size: 2rem; font-weight: 800; color: #FFF;">{{ total_bookings|default:"119,390" }}</div>
+      <div class="mono" style="font-size: 0.68rem; color: var(--emerald);">PMS Ledger Grounded</div>
+    </div>
+
+    <div class="panel" style="padding: 1.5rem;">
+      <div class="mono" style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem;">Properties Synchronized</div>
+      <div id="statHotels" style="font-family: var(--font-serif); font-size: 2rem; font-weight: 800; color: #FFF;">{{ total_properties|default:"7,465" }}</div>
+      <div class="mono" style="font-size: 0.68rem; color: var(--gold);">{{ indian_catalogue|default:"4,000" }} Indian Luxury</div>
+    </div>
+
+    <div class="panel" style="padding: 1.5rem;">
+      <div class="mono" style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem;">SOP Knowledge Base</div>
+      <div id="statRAG" style="font-family: var(--font-serif); font-size: 2rem; font-weight: 800; color: var(--vermilion);">{{ rag_articles|default:"3" }} SOP Articles</div>
+      <div class="mono" style="font-size: 0.68rem; color: var(--vermilion-light);">Cosine Semantic Grounding</div>
+    </div>
+
+    <div class="panel" style="padding: 1.5rem;">
+      <div class="mono" style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem;">Shift Supervisor</div>
+      <div style="font-family: var(--font-serif); font-size: 1.5rem; font-weight: 800; color: #FFF; margin-top: 0.2rem;">M. Laurent</div>
+      <div class="mono" style="font-size: 0.68rem; color: var(--emerald);">Active (14:00 - 22:00)</div>
+    </div>
+  </div>
+
+  <!-- Main Split Dashboard -->
+  <div class="grid-2" style="align-items: start; gap: 2.5rem;">
+    <!-- Left Column: Support Tickets & Triage -->
+    <div class="panel">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.85rem; margin-bottom: 1.25rem;">
+        <div>
+          <h2 style="font-size: 1.2rem; font-weight: 700; text-transform: uppercase; color: #FFF;">
+            Active Incident &amp; Task Triage
+          </h2>
+          <span class="mono" style="font-size: 0.68rem; color: var(--text-muted);">Real-time dispatch requests from guests</span>
+        </div>
+        <a href="{% url 'knowledge_pages:support' %}" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.68rem;">
+          + Dispatch Ticket
+        </a>
+      </div>
+
+      <div id="ticketsList" style="display: flex; flex-direction: column; gap: 0.85rem;">
+        {% for t in recent_tickets %}
+        <div style="padding: 1rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); transition: var(--transition);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+            <span class="mono" style="color: var(--vermilion-light); font-weight: 700; font-size: 0.75rem;">
+              {{ t.id }} • {{ t.room_number|default:"Room 402" }}
+            </span>
+            <span class="chip {% if t.priority == 'HIGH' or t.priority == 'URGENT' %}chip-vermilion{% else %}chip-gold{% endif %}" style="font-size: 0.65rem;">
+              {{ t.priority }} SLA
+            </span>
+          </div>
+
+          <div style="font-weight: 700; font-size: 0.9rem; color: #FFF; margin-bottom: 0.25rem;">
+            {{ t.subject }}
+          </div>
+
+          <div class="mono" style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+            Guest: {{ t.guest_name }} • {{ t.hotel_name }}
+          </div>
+
+          <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
+            {{ t.description }}
+          </p>
+
+          <div style="margin-top: 0.75rem; pt: 0.5rem; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+            <span class="mono" style="font-size: 0.65rem; color: var(--emerald);">Status: {{ t.status|default:"DISPATCHED" }}</span>
+            <button onclick="resolveTicket('{{ t.id }}')" class="btn btn-secondary" style="padding: 0.25rem 0.6rem; font-size: 0.65rem;">
+              Mark Resolved
+            </button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Right Column: Recent Booking Folios -->
+    <div class="panel">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.85rem; margin-bottom: 1.25rem;">
+        <div>
+          <h2 style="font-size: 1.2rem; font-weight: 700; text-transform: uppercase; color: #FFF;">
+            Recent Reservation Folios
+          </h2>
+          <span class="mono" style="font-size: 0.68rem; color: var(--text-muted);">Real entries from SQLite ledger</span>
+        </div>
+        <a href="{% url 'knowledge_pages:bookings' %}" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.68rem;">
+          View All Folios →
+        </a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="thread-table">
+          <thead>
+            <tr>
+              <th>Folio</th>
+              <th>Property</th>
+              <th>Stay Window</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="recentBookingsTbody">
+            {% for b in recent_reservations %}
+            <tr>
+              <td class="mono" style="color: var(--vermilion); font-weight: 700; font-size: 0.75rem;">#{{ b.id }}</td>
+              <td style="font-weight: 600; color: #FFF; font-size: 0.8rem;">{{ b.hotel|truncatechars:28 }}</td>
+              <td class="mono" style="font-size: 0.72rem;">{{ b.arrival_month }} {{ b.arrival_year }}</td>
+              <td><span class="chip chip-gold" style="font-size: 0.65rem;">{{ b.reservation_status|default:"Confirmed" }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+async function refreshDashboardData() {
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = true;
+  btn.textContent = '↻ Querying SQLite...';
+
+  try {
+    const res = await fetch('/api/staff-dashboard/');
+    if (!res.ok) throw new Error('Failed to query staff dashboard API');
+    const data = await res.json();
+
+    if (data.metrics) {
+      document.getElementById('statBookings').textContent = data.metrics.total_bookings_recorded.toLocaleString('en-IN');
+      document.getElementById('statHotels').textContent = data.metrics.verified_properties.toLocaleString('en-IN');
+      document.getElementById('statRAG').textContent = `${data.metrics.rag_knowledge_articles} SOP Articles`;
+    }
+
+    showToast('Dashboard metrics refreshed from SQLite ledger.', 'info');
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '↻ Refresh Operational Data';
+  }
+}
+
+function resolveTicket(ticketId) {
+  showToast(`Ticket ${ticketId} resolved and archived by Duty Manager Laurent.`, 'info');
+}
+
+function toggleSupervisorEmergency() {
+  const btn = document.getElementById('emergencyBtn');
+  if (btn.getAttribute('data-active') === 'true') {
+    btn.setAttribute('data-active', 'false');
+    btn.style.background = '#991B1B';
+    btn.textContent = '⚠ Emergency Takeover';
+    showToast('Autonomous AI Concierge re-engaged.', 'info');
+  } else {
+    btn.setAttribute('data-active', 'true');
+    btn.style.background = '#DC2626';
+    btn.textContent = '● Duty Manager Overriding';
+    showToast('Emergency Takeover Active: All autonomous replies paused for supervisor inspection.', 'error');
+  }
+}
+</script>
+{% endblock %}

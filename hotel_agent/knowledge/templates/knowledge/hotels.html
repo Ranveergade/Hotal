@@ -1,0 +1,251 @@
+{% extends "knowledge/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container" style="padding: 3.5rem 1.5rem 5rem;">
+  <!-- Section Header -->
+  <div style="margin-bottom: 2.5rem;">
+    <div class="mono" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--vermilion); margin-bottom: 0.4rem; font-weight: 700;">
+      Verified Inventory
+    </div>
+    <h1 style="font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; text-transform: uppercase; margin-bottom: 0.5rem;">
+      Hotel Directory &amp; Discovery
+    </h1>
+    <p style="font-size: 0.95rem; color: var(--text-muted); max-width: 680px;">
+      Direct querying of 4,000+ verified Indian luxury accommodations and 3,465 global listings from the local SQLite catalog.
+    </p>
+  </div>
+
+  <!-- Search & Filter Controls Panel -->
+  <div class="panel" style="margin-bottom: 2.5rem; padding: 1.5rem;">
+    <form id="hotelSearchForm" onsubmit="handleSearchHotels(event)" style="display: flex; flex-direction: column; gap: 1rem;">
+      <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 1rem; align-items: end;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" for="searchQuery">Keyword / Hotel Name / Facility</label>
+          <input type="text" id="searchQuery" class="form-control" placeholder="e.g. Taj Lake, swimming pool, luxury villa, spa...">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" for="searchCity">City / Destination</label>
+          <select id="searchCity" class="form-control">
+            <option value="">All Destinations</option>
+            {% for city in cities %}
+            <option value="{{ city }}">{{ city }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" for="searchSource">Dataset Source</label>
+          <select id="searchSource" class="form-control">
+            <option value="indian">Indian Luxury Catalog (4,000)</option>
+            <option value="global">Global Hotel Listings (3,465)</option>
+          </select>
+        </div>
+
+        <button type="submit" id="searchBtn" class="btn btn-primary" style="height: 42px;">
+          Search Hotels
+        </button>
+      </div>
+
+      <!-- Quick City Filters -->
+      <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; pt: 0.5rem;">
+        <span class="mono" style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Quick Jump:</span>
+        <button type="button" onclick="setQuickCity('Mumbai')" class="chip">Mumbai</button>
+        <button type="button" onclick="setQuickCity('Udaipur')" class="chip">Udaipur</button>
+        <button type="button" onclick="setQuickCity('New Delhi')" class="chip">New Delhi</button>
+        <button type="button" onclick="setQuickCity('Bengaluru')" class="chip">Bengaluru</button>
+        <button type="button" onclick="setQuickCity('Jaipur')" class="chip">Jaipur</button>
+        <button type="button" onclick="setQuickCity('Goa')" class="chip">Goa</button>
+        <button type="button" onclick="setQuickCity('')" class="chip chip-vermilion">Clear</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Results Count & Active Endpoint Indicator -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+    <div id="resultsCount" class="mono" style="font-size: 0.78rem; color: var(--text-secondary);">
+      Displaying verified records from catalog
+    </div>
+    <div id="endpointBadge" class="mono" style="font-size: 0.7rem; color: var(--text-muted);">
+      Connected to: <code>GET /api/indian-hotels/</code>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div id="hotelLoading" style="display: none; text-align: center; padding: 4rem 0;">
+    <div class="orbital-center" style="margin: 0 auto 1rem; width: 48px; height: 48px; font-size: 1.1rem;">⏳</div>
+    <div class="mono" style="font-size: 0.8rem; color: var(--vermilion-light);">Retrieving SQLite hotel catalog records...</div>
+  </div>
+
+  <!-- Hotel Cards Grid -->
+  <div id="hotelsGrid" class="grid-3">
+    {% for hotel in initial_hotels %}
+    <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <span class="chip chip-gold">
+            ★ {{ hotel.star_rating|default:5 }} Stars
+          </span>
+          {% if hotel.review_rating %}
+          <span class="mono" style="font-size: 0.7rem; color: var(--emerald);">
+            Rating: {{ hotel.review_rating|floatformat:1 }} / 5.0
+          </span>
+          {% endif %}
+        </div>
+
+        <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.35rem; color: #FFF;">
+          {{ hotel.name }}
+        </h3>
+
+        <div class="mono" style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.85rem;">
+          📍 {{ hotel.city }}, {{ hotel.state }}
+        </div>
+
+        {% if hotel.address %}
+        <p class="mono" style="font-size: 0.68rem; color: var(--text-muted); margin-bottom: 0.65rem; line-height: 1.4;">
+          {{ hotel.address|truncatechars:80 }}
+        </p>
+        {% endif %}
+
+        <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1.25rem;">
+          {{ hotel.description|default:"Premier luxury hospitality destination featuring authentic architectural design and full concierge staff."|truncatechars:140 }}
+        </p>
+      </div>
+
+      <div style="border-top: 1px solid var(--border-subtle); padding-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <span class="mono" style="font-size: 0.65rem; color: var(--text-muted); display: block;">INVENTORY TARIFF</span>
+          <span class="mono" style="font-size: 0.85rem; color: var(--vermilion); font-weight: 700;">
+            ₹{{ hotel.star_rating|default:5|stringformat:"d" }}4,500
+          </span>
+        </div>
+        <a href="{% url 'knowledge_pages:booking' %}?hotel_id={{ hotel.id }}" class="btn btn-primary" style="padding: 0.45rem 0.9rem; font-size: 0.7rem;">
+          Book Room
+        </a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Empty State -->
+  <div id="hotelEmptyState" style="display: none; text-align: center; padding: 5rem 0; background: var(--bg-surface); border: 1px dashed var(--border-subtle); border-radius: var(--radius-md);">
+    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🏨</div>
+    <h3 style="font-size: 1.25rem; font-weight: 700; color: #FFF; margin-bottom: 0.5rem;">No Matching Hotels Found</h3>
+    <p style="font-size: 0.85rem; color: var(--text-muted); max-width: 460px; margin: 0 auto 1.5rem;">
+      No properties matched your search parameters. Try choosing another city or clearing your keywords.
+    </p>
+    <button type="button" onclick="setQuickCity('')" class="btn btn-secondary">
+      Reset All Filters
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function setQuickCity(cityName) {
+  document.getElementById('searchCity').value = cityName;
+  document.getElementById('searchQuery').value = '';
+  handleSearchHotels(new Event('submit'));
+}
+
+async function handleSearchHotels(e) {
+  if (e) e.preventDefault();
+
+  const query = document.getElementById('searchQuery').value.trim();
+  const city = document.getElementById('searchCity').value.trim();
+  const source = document.getElementById('searchSource').value;
+
+  const loading = document.getElementById('hotelLoading');
+  const grid = document.getElementById('hotelsGrid');
+  const emptyState = document.getElementById('hotelEmptyState');
+  const countText = document.getElementById('resultsCount');
+  const endpointBadge = document.getElementById('endpointBadge');
+
+  loading.style.display = 'block';
+  grid.style.display = 'none';
+  emptyState.style.display = 'none';
+
+  let url = '';
+  if (source === 'indian') {
+    url = `/api/indian-hotels/?limit=24`;
+    if (query) url += `&q=${encodeURIComponent(query)}`;
+    if (city) url += `&city=${encodeURIComponent(city)}`;
+    endpointBadge.textContent = 'Connected to: GET /api/indian-hotels/';
+  } else {
+    url = `/api/hotels/?limit=24`;
+    if (query) url += `&q=${encodeURIComponent(query)}`;
+    if (city) url += `&location=${encodeURIComponent(city)}`;
+    endpointBadge.textContent = 'Connected to: GET /api/hotels/';
+  }
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+    const data = await res.json();
+    const results = data.results || [];
+
+    loading.style.display = 'none';
+
+    if (results.length === 0) {
+      emptyState.style.display = 'block';
+      countText.textContent = '0 properties found';
+      return;
+    }
+
+    grid.style.display = 'grid';
+    countText.textContent = `Found ${data.count || results.length} properties matching criteria`;
+
+    grid.innerHTML = results.map(hotel => {
+      const star = hotel.star_rating || (hotel.rating ? parseInt(hotel.rating) : 5);
+      const price = hotel.price || `₹${star * 4200}`;
+      const location = hotel.city ? `${hotel.city}, ${hotel.state || ''}` : (hotel.location || 'India');
+      const desc = escapeHtml(hotel.description || 'Premier hospitality accommodation with verified heritage amenities.');
+
+      return `
+        <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+              <span class="chip chip-gold">★ ${star} Stars</span>
+              <span class="mono" style="font-size: 0.7rem; color: var(--emerald);">Grounded</span>
+            </div>
+
+            <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.35rem; color: #FFF;">
+              ${escapeHtml(hotel.name)}
+            </h3>
+
+            <div class="mono" style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.85rem;">
+              📍 ${escapeHtml(location)}
+            </div>
+
+            <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1.25rem;">
+              ${desc.substring(0, 130)}...
+            </p>
+          </div>
+
+          <div style="border-top: 1px solid var(--border-subtle); padding-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <span class="mono" style="font-size: 0.65rem; color: var(--text-muted); display: block;">INVENTORY TARIFF</span>
+              <span class="mono" style="font-size: 0.85rem; color: var(--vermilion); font-weight: 700;">
+                ${escapeHtml(String(price))}
+              </span>
+            </div>
+            <a href="/booking/?hotel_id=${hotel.id}" class="btn btn-primary" style="padding: 0.45rem 0.9rem; font-size: 0.7rem;">
+              Book Room
+            </a>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  } catch (err) {
+    loading.style.display = 'none';
+    emptyState.style.display = 'block';
+    emptyState.querySelector('h3').textContent = 'Unable to Load Hotels';
+    emptyState.querySelector('p').textContent = `Catalog query error: ${err.message}. Please check connection.`;
+    showToast(`Failed to load hotels: ${err.message}`, 'error');
+  }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,202 @@
+{% extends "knowledge/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container" style="padding: 3.5rem 1.5rem 5rem;">
+  <!-- Header -->
+  <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; gap: 1rem;">
+    <div>
+      <div class="mono" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--vermilion); margin-bottom: 0.4rem; font-weight: 700;">
+        Autonomous Operations
+      </div>
+      <h1 style="font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; text-transform: uppercase; margin-bottom: 0.5rem;">
+        AI Concierge Terminal
+      </h1>
+      <p style="font-size: 0.95rem; color: var(--text-muted); max-width: 680px;">
+        Powered by NVIDIA NIM (<code>openai/gpt-oss-20b</code>) and grounded against internal hotel records.
+      </p>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem; align-items: center;">
+      <span class="chip chip-emerald">Live API Grounded</span>
+      <button onclick="clearChatHistory()" class="btn btn-secondary" style="padding: 0.45rem 0.85rem; font-size: 0.7rem;">
+        Clear Conversation
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Chat Terminal -->
+  <div class="chat-window">
+    <!-- Messages Scroll Area -->
+    <div id="chatMessages" class="chat-messages">
+      <!-- Welcome Message -->
+      <div class="chat-bubble bubble-assistant">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;">
+          <span class="mono" style="font-size: 0.7rem; color: var(--vermilion-light); font-weight: 700;">THREAD AI CONCIERGE</span>
+          <span class="mono" style="font-size: 0.65rem; color: var(--text-muted);">SOP Grounded</span>
+        </div>
+        <p>
+          Greetings. I am your autonomous hospitality assistant, linked directly to our verified Indian hotel database and standard operating procedures. How may I assist your stay, dining arrangements, or property inquiry today?
+        </p>
+      </div>
+    </div>
+
+    <!-- Loading Indicator Bubble -->
+    <div id="aiTypingIndicator" style="display: none; padding: 0.75rem 1.5rem; background: var(--bg-surface); border-top: 1px solid var(--border-subtle);">
+      <div class="mono" style="font-size: 0.72rem; color: var(--vermilion-light); display: flex; align-items: center; gap: 0.6rem;">
+        <span style="display: inline-block; animation: pulseDot 1s infinite;">⏳</span>
+        <span>Synthesizing grounded response via NVIDIA OSS-20B...</span>
+      </div>
+    </div>
+
+    <!-- Suggested Query Chips -->
+    <div style="padding: 0.75rem 1rem; background: rgba(8, 9, 12, 0.7); border-top: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 0.5rem; overflow-x: auto;">
+      <span class="mono" style="font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; white-space: nowrap;">Try:</span>
+      {% for prompt in sample_prompts %}
+      <button type="button" onclick="sendSuggestedPrompt('{{ prompt|escapejs }}')" class="chip" style="white-space: nowrap; cursor: pointer;">
+        {{ prompt }}
+      </button>
+      {% endfor %}
+    </div>
+
+    <!-- Input Form Area -->
+    <form id="chatForm" onsubmit="handleChatSubmit(event)" class="chat-input-area" style="display: flex; gap: 0.75rem; align-items: center;">
+      <textarea
+        id="chatInput"
+        rows="1"
+        class="form-control"
+        placeholder="Type a message or policy inquiry... (Enter to send, Shift+Enter for newline)"
+        style="resize: none; max-height: 120px; font-size: 0.88rem; padding: 0.75rem 1rem;"
+      ></textarea>
+
+      <button type="submit" id="chatSendBtn" class="btn btn-primary" style="height: 44px; padding: 0 1.4rem;">
+        <span>Send</span>
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+        </svg>
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const chatInput = document.getElementById('chatInput');
+const chatMessages = document.getElementById('chatMessages');
+const chatSendBtn = document.getElementById('chatSendBtn');
+const typingIndicator = document.getElementById('aiTypingIndicator');
+
+// Auto-expand textarea & Enter-to-send
+chatInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    handleChatSubmit(e);
+  }
+});
+
+function sendSuggestedPrompt(text) {
+  chatInput.value = text;
+  handleChatSubmit(new Event('submit'));
+}
+
+function clearChatHistory() {
+  chatMessages.innerHTML = `
+    <div class="chat-bubble bubble-assistant">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;">
+        <span class="mono" style="font-size: 0.7rem; color: var(--vermilion-light); font-weight: 700;">THREAD AI CONCIERGE</span>
+        <span class="mono" style="font-size: 0.65rem; color: var(--text-muted);">SOP Grounded</span>
+      </div>
+      <p>Conversation cleared. Ready for your hotel questions or service inquiries.</p>
+    </div>
+  `;
+}
+
+async function handleChatSubmit(e) {
+  if (e) e.preventDefault();
+  const text = chatInput.value.trim();
+  if (!text) return;
+
+  // Append user bubble
+  appendBubble('user', text);
+  chatInput.value = '';
+  chatSendBtn.disabled = true;
+  typingIndicator.style.display = 'block';
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  try {
+    const res = await fetch('/api/ai-assistant/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken') || '',
+      },
+      body: JSON.stringify({ message: text }),
+    });
+
+    const data = await res.json();
+    typingIndicator.style.display = 'none';
+
+    if (res.ok) {
+      appendBubble('assistant', data.answer, data.hotels, data.matched_city);
+    } else {
+      appendBubble('assistant', `Service Notice: ${data.error || 'Temporary upstream model latency.'}`, null, null, true);
+    }
+  } catch (err) {
+    typingIndicator.style.display = 'none';
+    appendBubble('assistant', `Connection error: Unable to reach backend. ${err.message}`, null, null, true);
+  } finally {
+    chatSendBtn.disabled = false;
+    chatInput.focus();
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+}
+
+function appendBubble(sender, text, hotels = null, matchedCity = null, isError = false) {
+  const bubble = document.createElement('div');
+  bubble.className = `chat-bubble ${sender === 'user' ? 'bubble-user' : 'bubble-assistant'}`;
+
+  if (sender === 'user') {
+    bubble.innerHTML = `
+      <div class="mono" style="font-size: 0.68rem; opacity: 0.8; margin-bottom: 0.25rem;">GUEST TERMINAL</div>
+      <div>${escapeHtml(text)}</div>
+    `;
+  } else {
+    let hotelCardsHtml = '';
+    if (hotels && hotels.length > 0) {
+      hotelCardsHtml = `
+        <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border-subtle);">
+          <div class="mono" style="font-size: 0.7rem; color: var(--vermilion-light); text-transform: uppercase; font-weight: 700; margin-bottom: 0.5rem;">
+            Verified Catalogue Recommendations (${hotels.length}):
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.65rem;">
+            ${hotels.slice(0, 4).map(h => `
+              <div style="padding: 0.65rem; background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); border-radius: 6px; font-size: 0.75rem;">
+                <div style="font-weight: 700; color: #FFF;">${escapeHtml(h.name)}</div>
+                <div class="mono" style="font-size: 0.68rem; color: var(--text-muted);">${escapeHtml(h.city)}, ${escapeHtml(h.state || '')}</div>
+                <div class="mono" style="color: var(--gold); font-size: 0.68rem; margin-top: 2px;">★ ${h.star_rating || 5} Stars</div>
+                <a href="/booking/?hotel_id=${h.id || ''}" style="color: var(--vermilion-light); font-size: 0.7rem; text-decoration: underline; display: inline-block; margin-top: 4px;">Direct Booking →</a>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    bubble.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;">
+        <span class="mono" style="font-size: 0.7rem; color: ${isError ? 'var(--vermilion)' : 'var(--vermilion-light)'}; font-weight: 700;">
+          ${isError ? 'ALERT / NOTICE' : 'THREAD AI CONCIERGE'}
+        </span>
+        ${matchedCity ? `<span class="chip" style="font-size: 0.65rem; padding: 0.15rem 0.4rem;">City: ${escapeHtml(matchedCity)}</span>` : ''}
+      </div>
+      <div style="white-space: pre-line; color: ${isError ? 'var(--vermilion-light)' : 'inherit'};">${escapeHtml(text)}</div>
+      ${hotelCardsHtml}
+    `;
+  }
+
+  chatMessages.appendChild(bubble);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+</script>
+{% endblock %}
